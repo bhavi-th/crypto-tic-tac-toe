@@ -20,7 +20,10 @@ export const useGame = () => {
     setLoading(true);
     try {
       const wagerWei = ethers.parseEther(wagerAmount.toString());
-      const tx = await web3State.contractInstance.createGame({ value: wagerWei });
+      const gasCostWei = ethers.parseEther('0.00162'); // Pre-paid gas cost
+      const totalWei = wagerWei + gasCostWei;
+      
+      const tx = await web3State.contractInstance.createGame({ value: totalWei });
       
       toast.info('Creating game...');
       const receipt = await tx.wait();
@@ -39,7 +42,7 @@ export const useGame = () => {
         const parsedEvent = web3State.contractInstance.interface.parseLog(gameCreatedEvent);
         const gameId = parsedEvent.args.gameId;
         
-        toast.success(`Game ${gameId} created with ${wagerAmount} ETH wager!`);
+        toast.success(`Game ${gameId} created! Wager: ${wagerAmount} ETH + Gas: 0.00162 ETH`);
         await fetchAvailableGames();
         await fetchPlayerGames();
         
@@ -65,13 +68,15 @@ export const useGame = () => {
     try {
       const game = await web3State.contractInstance.getGame(gameId);
       const wagerWei = game.wager;
+      const gasCostWei = ethers.parseEther('0.00162'); // Pre-paid gas cost
+      const totalWei = wagerWei + gasCostWei;
       
-      const tx = await web3State.contractInstance.joinGame(gameId, { value: wagerWei });
+      const tx = await web3State.contractInstance.joinGame(gameId, { value: totalWei });
       
       toast.info('Joining game...');
       const receipt = await tx.wait();
       
-      toast.success(`Joined game ${gameId}!`);
+      toast.success(`Joined game ${gameId}! Wager + Gas: 0.00162 ETH`);
       await fetchAvailableGames();
       await fetchPlayerGames();
       await fetchGameDetails(gameId);
@@ -138,6 +143,71 @@ export const useGame = () => {
       setLoading(false);
     }
     return false;
+  }, [web3State]);
+
+  // Pre-paid gas functions
+  const getGameGasDeposit = useCallback(async (gameId, player) => {
+    if (!web3State.contractInstance) return '0';
+    
+    try {
+      // Check if function exists on contract
+      if (typeof web3State.contractInstance.getGameGasDeposit !== 'function') {
+        console.log('getGameGasDeposit not available on contract, using fallback value');
+        return '0.00162'; // Default full gas deposit
+      }
+      
+      const deposit = await web3State.contractInstance.getGameGasDeposit(gameId, player);
+      return ethers.formatEther(deposit);
+    } catch (error) {
+      console.error('Get game gas deposit error:', error);
+      return '0.00162'; // Fallback to full deposit
+    }
+  }, [web3State]);
+
+  const getGameMovesCount = useCallback(async (gameId) => {
+    if (!web3State.contractInstance) return 0;
+    
+    try {
+      // Check if function exists on contract
+      if (typeof web3State.contractInstance.getGameMovesCount !== 'function') {
+        console.log('getGameMovesCount not available on contract, using fallback value');
+        return 0; // Default to 0 moves
+      }
+      
+      const count = await web3State.contractInstance.getGameMovesCount(gameId);
+      return Number(count);
+    } catch (error) {
+      console.error('Get game moves count error:', error);
+      return 0; // Fallback to 0 moves
+    }
+  }, [web3State]);
+
+  const getGasCostInfo = useCallback(async () => {
+    if (!web3State.contractInstance) return { moveCost: '0', totalGameCost: '0' };
+    
+    try {
+      // Check if function exists on contract
+      if (typeof web3State.contractInstance.getGasCostInfo !== 'function') {
+        console.log('getGasCostInfo not available on contract, using fallback values');
+        return {
+          moveCost: '0.00018', // Default move cost
+          totalGameCost: '0.00162' // 9 moves * 0.00018
+        };
+      }
+      
+      const [moveCost, totalGameCost] = await web3State.contractInstance.getGasCostInfo();
+      return {
+        moveCost: ethers.formatEther(moveCost),
+        totalGameCost: ethers.formatEther(totalGameCost)
+      };
+    } catch (error) {
+      console.error('Get gas cost info error:', error);
+      // Return fallback values
+      return {
+        moveCost: '0.00018', // Default move cost
+        totalGameCost: '0.00162' // 9 moves * 0.00018
+      };
+    }
   }, [web3State]);
 
   // Claim timeout if opponent hasn't moved
@@ -420,6 +490,9 @@ export const useGame = () => {
     makeMove,
     submitBatchMoves,
     claimTimeout,
+    getGameGasDeposit,
+    getGameMovesCount,
+    getGasCostInfo,
     fetchGameDetails,
     fetchPlayerGames,
     fetchAvailableGames,

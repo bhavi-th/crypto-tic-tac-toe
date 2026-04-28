@@ -15,16 +15,28 @@ const GameLobby = () => {
     createGame, 
     joinGame, 
     fetchAvailableGames, 
-    fetchPlayerGames 
+    fetchPlayerGames,
+    getGasCostInfo
   } = useGame();
   
   const [wagerAmount, setWagerAmount] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [gasCostInfo, setGasCostInfo] = useState({ moveCost: '0', totalGameCost: '0' });
 
   useEffect(() => {
     fetchAvailableGames();
     fetchPlayerGames();
   }, [fetchAvailableGames, fetchPlayerGames]);
+
+  useEffect(() => {
+    // Fetch gas cost info
+    const fetchGasInfo = async () => {
+      const info = await getGasCostInfo();
+      setGasCostInfo(info);
+    };
+    
+    fetchGasInfo();
+  }, [getGasCostInfo]);
 
   const handleCreateGame = async () => {
     if (!wagerAmount || parseFloat(wagerAmount) <= 0) {
@@ -63,6 +75,41 @@ const GameLobby = () => {
           <p className="font-body text-surface-a50">
             Stake Sepolia ETH and battle opponents in on-chain Tic-Tac-Toe. Winner takes all!
           </p>
+        </div>
+
+        {/* Pre-paid Gas Info Widget */}
+        <div className="mb-8 bg-gradient-to-r from-primary-a0/10 to-success-a0/10 border border-primary-a20/30 rounded-2xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-heading font-semibold text-lg text-primary-a40 mb-2">
+                ⛽ Pre-paid Gas System
+              </h3>
+              <div className="flex items-center gap-6 text-sm">
+                <div>
+                  <span className="text-surface-a50">Cost per Move:</span>
+                  <span className="ml-2 font-mono text-primary-a30">{parseFloat(gasCostInfo.moveCost).toFixed(6)} ETH</span>
+                </div>
+                <div>
+                  <span className="text-surface-a50">Total Gas per Game:</span>
+                  <span className="ml-2 font-mono text-success-a10">{parseFloat(gasCostInfo.totalGameCost).toFixed(6)} ETH</span>
+                </div>
+                <div className="text-surface-a50">
+                  💡 Gas collected during create/join, refunded for unused moves
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
+            <div className="bg-surface-tonal-a10 rounded-lg p-3">
+              <div className="font-semibold text-surface-a40 mb-1">Create Game</div>
+              <div className="text-surface-a50">Wager + {parseFloat(gasCostInfo.totalGameCost).toFixed(6)} ETH gas</div>
+            </div>
+            <div className="bg-surface-tonal-a10 rounded-lg p-3">
+              <div className="font-semibold text-surface-a40 mb-1">Join Game</div>
+              <div className="text-surface-a50">Wager + {parseFloat(gasCostInfo.totalGameCost).toFixed(6)} ETH gas</div>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

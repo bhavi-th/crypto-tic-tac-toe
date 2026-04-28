@@ -21,6 +21,17 @@ contract TicTacToe {
     uint256 public gameCounter;
     uint256 public constant TIMEOUT_DURATION = 5 minutes;
     
+    // Pre-paid gas system
+    uint256 public constant MAX_MOVES_PER_GAME = 9;
+    uint256 public constant MOVE_GAS_COST = 0.00018 ether; // Average gas cost per move
+    uint256 public constant TOTAL_GAME_GAS = MOVE_GAS_COST * MAX_MOVES_PER_GAME; // 0.00162 ETH per player
+    mapping(uint256 => mapping(address => uint256)) public gameGasDeposits; // gameId => player => deposit
+    mapping(uint256 => uint256) public gameMovesCount; // Track actual moves made
+    
+    event GasDeposited(uint256 indexed gameId, address indexed player, uint256 amount);
+    event GasUsed(uint256 indexed gameId, address indexed player, uint256 amount);
+    event GasRefunded(uint256 indexed gameId, address indexed player, uint256 amount);
+    
     event GameCreated(uint256 indexed gameId, address indexed player1, uint256 wager);
     event GameJoined(uint256 indexed gameId, address indexed player2);
     event MoveMade(uint256 indexed gameId, address indexed player, uint8 position);
@@ -28,22 +39,31 @@ contract TicTacToe {
     event TimeoutClaimed(uint256 indexed gameId, address indexed claimer);
     
     function createGame() external payable returns (uint256) {
-        require(msg.value > 0, "Wager must be greater than 0");
+        require(msg.value > TOTAL_GAME_GAS, "Wager must cover gas costs");
+        
+        // Separate wager and gas deposit
+        uint256 wager = msg.value - TOTAL_GAME_GAS;
+        require(wager > 0, "Wager must be greater than 0");
         
         gameCounter++;
         games[gameCounter] = Game({
             player1: msg.sender,
             player2: address(0),
-            wager: msg.value,
+            wager: wager,
             lastMoveTime: block.timestamp,
             status: GameStatus.Empty,
             board: [uint8(0), 0, 0, 0, 0, 0, 0, 0, 0],
             currentTurn: Player.Player1
         });
         
+        // Store gas deposit for player1
+        gameGasDeposits[gameCounter][msg.sender] = TOTAL_GAME_GAS;
+        gameMovesCount[gameCounter] = 0;
+        
         playerGames[msg.sender].push(gameCounter);
         
-        emit GameCreated(gameCounter, msg.sender, msg.value);
+        emit GameCreated(gameCounter, msg.sender, wager);
+        emit GasDeposited(gameCounter, msg.sender, TOTAL_GAME_GAS);
         return gameCounter;
     }
     
@@ -51,16 +71,20 @@ contract TicTacToe {
         Game storage game = games[_gameId];
         require(game.status == GameStatus.Empty, "Game not available");
         require(game.player2 == address(0), "Game already has two players");
-        require(msg.value == game.wager, "Wager amount mismatch");
+        require(msg.value == game.wager + TOTAL_GAME_GAS, "Must include wager and gas deposit");
         require(msg.sender != game.player1, "Cannot join your own game");
         
         game.player2 = msg.sender;
         game.status = GameStatus.Active;
         game.lastMoveTime = block.timestamp;
         
+        // Store gas deposit for player2
+        gameGasDeposits[_gameId][msg.sender] = TOTAL_GAME_GAS;
+        
         playerGames[msg.sender].push(_gameId);
         
         emit GameJoined(_gameId, msg.sender);
+        emit GasDeposited(_gameId, msg.sender, TOTAL_GAME_GAS);
     }
     
     function makeMove(uint256 _gameId, uint8 _position) external {
@@ -68,6 +92,9 @@ contract TicTacToe {
         require(game.status == GameStatus.Active, "Game not active");
         require(_position < 9, "Invalid position");
         require(game.board[_position] == 0, "Position already taken");
+        
+        // Check gas deposit
+        require(gameGasDeposits[_gameId][msg.sender] >= MOVE_GAS_COST, "Insufficient gas deposit");
         
         // Check if it's the player's turn
         if (game.currentTurn == Player.Player1) {
@@ -82,7 +109,12 @@ contract TicTacToe {
         
         game.lastMoveTime = block.timestamp;
         
+        // Deduct gas cost and track moves
+        gameGasDeposits[_gameId][msg.sender] -= MOVE_GAS_COST;
+        gameMovesCount[_gameId]++;
+        
         emit MoveMade(_gameId, msg.sender, _position);
+        emit GasUsed(_gameId, msg.sender, MOVE_GAS_COST);
         
         // Check for win or draw
         GameStatus result = checkGameResult(game.board);
@@ -197,19 +229,45 @@ contract TicTacToe {
             _status == GameStatus.Player1Won ? game.player1 : 
             _status == GameStatus.Player2Won ? game.player2 : address(0));
         
+        // Calculate gas refunds
+        uint256 player1Refund = gameGasDeposits[_gameId][game.player1];
+        uint256 player2Refund = gameGasDeposits[_gameId][game.player2];
+        
+        // Handle wager payouts
         if (_status == GameStatus.Player1Won) {
-            (bool success, ) = (payable(game.player1)).call{value: game.wager * 2}("");
+            (bool success, ) = (payable(game.player1)).call{value: game.wager * 2 + player1Refund}("");
             require(success, "Transfer to player 1 failed");
+            
+            // Refund remaining gas to player2
+            if (player2Refund > 0) {
+                (bool refundSuccess, ) = (payable(game.player2)).call{value: player2Refund}("");
+                require(refundSuccess, "Refund to player 2 failed");
+                emit GasRefunded(_gameId, game.player2, player2Refund);
+            }
         } else if (_status == GameStatus.Player2Won) {
-            (bool success, ) = (payable(game.player2)).call{value: game.wager * 2}("");
+            (bool success, ) = (payable(game.player2)).call{value: game.wager * 2 + player2Refund}("");
             require(success, "Transfer to player 2 failed");
+            
+            // Refund remaining gas to player1
+            if (player1Refund > 0) {
+                (bool refundSuccess, ) = (payable(game.player1)).call{value: player1Refund}("");
+                require(refundSuccess, "Refund to player 1 failed");
+                emit GasRefunded(_gameId, game.player1, player1Refund);
+            }
         } else if (_status == GameStatus.Draw) {
-            // Split the wager in case of draw
-            (bool success1, ) = (payable(game.player1)).call{value: game.wager}("");
+            // Split the wager and return gas refunds
+            (bool success1, ) = (payable(game.player1)).call{value: game.wager + player1Refund}("");
             require(success1, "Transfer to player 1 failed");
-            (bool success2, ) = (payable(game.player2)).call{value: game.wager}("");
+            (bool success2, ) = (payable(game.player2)).call{value: game.wager + player2Refund}("");
             require(success2, "Transfer to player 2 failed");
+            
+            emit GasRefunded(_gameId, game.player1, player1Refund);
+            emit GasRefunded(_gameId, game.player2, player2Refund);
         }
+        
+        // Clear gas deposits
+        gameGasDeposits[_gameId][game.player1] = 0;
+        gameGasDeposits[_gameId][game.player2] = 0;
     }
     
     // View functions
@@ -267,5 +325,18 @@ contract TicTacToe {
         } else {
             return msg.sender == game.player2;
         }
+    }
+    
+    // Pre-paid gas view functions
+    function getGameGasDeposit(uint256 _gameId, address _player) external view returns (uint256) {
+        return gameGasDeposits[_gameId][_player];
+    }
+    
+    function getGameMovesCount(uint256 _gameId) external view returns (uint256) {
+        return gameMovesCount[_gameId];
+    }
+    
+    function getGasCostInfo() external view returns (uint256 moveCost, uint256 totalGameCost) {
+        return (MOVE_GAS_COST, TOTAL_GAME_GAS);
     }
 }

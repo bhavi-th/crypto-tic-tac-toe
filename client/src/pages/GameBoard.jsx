@@ -17,11 +17,17 @@ const GameBoard = () => {
     makeMove, 
     claimTimeout, 
     fetchGameDetails, 
-    isMyTurn: checkMyTurn 
+    isMyTurn: checkMyTurn,
+    getGameGasDeposit,
+    getGameMovesCount,
+    getGasCostInfo
   } = useGame();
   
   const [myTurn, setMyTurn] = useState(false);
   const [timeUntilTimeout, setTimeUntilTimeout] = useState(null);
+  const [gasDeposit, setGasDeposit] = useState('0');
+  const [movesCount, setMovesCount] = useState(0);
+  const [gasCostInfo, setGasCostInfo] = useState({ moveCost: '0', totalGameCost: '0' });
 
   useEffect(() => {
     if (gameId) {
@@ -36,6 +42,24 @@ const GameBoard = () => {
       return () => clearInterval(interval);
     }
   }, [currentGame, selectedAccount]);
+
+  useEffect(() => {
+    if (selectedAccount && gameId) {
+      // Fetch pre-paid gas data
+      const fetchGasData = async () => {
+        const deposit = await getGameGasDeposit(gameId, selectedAccount);
+        const moves = await getGameMovesCount(gameId);
+        const costInfo = await getGasCostInfo();
+        setGasDeposit(deposit);
+        setMovesCount(moves);
+        setGasCostInfo(costInfo);
+      };
+      
+      fetchGasData();
+      const interval = setInterval(fetchGasData, 5000); // Check every 5 seconds
+      return () => clearInterval(interval);
+    }
+  }, [selectedAccount, gameId, getGameGasDeposit, getGameMovesCount, getGasCostInfo]);
 
   const checkTurnStatus = async () => {
     if (!currentGame || !selectedAccount) return;
@@ -65,7 +89,7 @@ const GameBoard = () => {
 
   const handleCellClick = async (index) => {
     // Debug logging
-    console.log('Cell click:', { index, myTurn, loading, board: currentGame?.board });
+    console.log('Cell click:', { index, myTurn, loading, board: currentGame?.board, gasDeposit, movesCount });
     
     if (!currentGame || !currentGame.board) {
       toast.error('Game not loaded properly');
@@ -87,6 +111,14 @@ const GameBoard = () => {
       return;
     }
 
+    // Check if player has enough gas deposit
+    const hasGasDeposit = parseFloat(gasDeposit) >= parseFloat(gasCostInfo.moveCost);
+    if (!hasGasDeposit) {
+      toast.error('Insufficient gas deposit for this move!');
+      return;
+    }
+
+    console.log('Using pre-paid gas move');
     await makeMove(gameId, index);
   };
 
@@ -181,6 +213,26 @@ const GameBoard = () => {
                   {formatTime(timeUntilTimeout || 0)}
                 </span>
               </div>
+            </div>
+            
+            {/* Pre-paid Gas Widget */}
+            <div className="bg-surface-tonal-a10 rounded-lg p-3 border border-surface-tonal-a30">
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <div className="text-xs text-surface-a50">Gas Deposit</div>
+                  <div className="font-mono text-sm text-primary-a30">{parseFloat(gasDeposit).toFixed(6)} ETH</div>
+                  <div className="text-xs text-surface-a50 mt-1">Moves: {movesCount}/9</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-surface-a50">Cost per Move</div>
+                  <div className="font-mono text-sm text-success-a10">{parseFloat(gasCostInfo.moveCost).toFixed(6)} ETH</div>
+                </div>
+              </div>
+              {parseFloat(gasDeposit) < parseFloat(gasCostInfo.moveCost) && (
+                <div className="text-xs text-warning-a10 mt-2">
+                  ⚠️ Insufficient gas for next move!
+                </div>
+              )}
             </div>
             
             <div className={`px-4 py-2 rounded-lg font-label font-semibold ${
