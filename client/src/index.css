@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@theme {
+  /* Custom breakpoints */
+  --breakpoint-sm: 300px;
+  --breakpoint-md: 800px;
+  --breakpoint-lg: 1444px;
+
+  /* Primary colors — dark purple/violet */
+  --color-primary-a0: #7755aa;
+  --color-primary-a10: #8366b3;
+  --color-primary-a20: #9076bc;
+  --color-primary-a30: #9d87c5;
+  --color-primary-a40: #ab98ce;
+  --color-primary-a50: #b8a9d6;
+
+  /* Surface colors — dark */
+  --color-surface-a0: #121212;
+  --color-surface-a10: #252525;
+  --color-surface-a20: #393939;
+  --color-surface-a30: #4f4f4f;
+  --color-surface-a40: #666666;
+  --color-surface-a50: #7d7d7d;
+
+  /* Surface tonal — purplish dark */
+  --color-surface-tonal-a0: #1b181f;
+  --color-surface-tonal-a10: #2e2b32;
+  --color-surface-tonal-a20: #423f45;
+  --color-surface-tonal-a30: #57545a;
+  --color-surface-tonal-a40: #6d6a70;
+  --color-surface-tonal-a50: #838186;
+
+  /* Success */
+  --color-success-a0: #22946e;
+  --color-success-a10: #5ba989;
+  --color-success-a20: #86bfa6;
+
+  /* Warning */
+  --color-warning-a0: #a87a2a;
+  --color-warning-a10: #ba945a;
+  --color-warning-a20: #cbae84;
+
+  /* Danger */
+  --color-danger-a0: #9c2121;
+  --color-danger-a10: #b4544c;
+  --color-danger-a20: #ca7f77;
+
+  /* Info */
+  --color-info-a0: #21498a;
+  --color-info-a10: #4b6ca2;
+  --color-info-a20: #7590ba;
+
+  /* Font families */
+  --font-heading: "Funnel Display", serif;
+  --font-body: "Quicksand", sans-serif;
+  --font-label: "Inter Tight", sans-serif;
+}
+
+/* Base styles */
+body {
+  background-color: var(--color-surface-a0);
+  color: #e0e0e0;
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+label, small, .label-text {
+  font-family: var(--font-label);
+}
+
+/* Animated gradient text */
+.gradient-text {
+  background: linear-gradient(to right, #b8a9d6, #7755aa, #9076bc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 400% 100%;
+  animation: gradientAnimation 20s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes gradientAnimation {
+  0% { background-position: left; }
+  25% { background-position: 50% 50%; }
+  50% { background-position: right; }
+  75% { background-position: 50% 50%; }
+  100% { background-position: left; }
+}
