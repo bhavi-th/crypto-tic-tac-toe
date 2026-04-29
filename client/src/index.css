@@ -487,8 +487,13 @@ label, small, .label-text {
   background: linear-gradient(135deg, rgba(26, 31, 46, 0.95), rgba(10, 14, 26, 0.98));
   border-right: 1px solid rgba(0, 168, 204, 0.2);
   backdrop-filter: blur(10px);
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 20rem; /* Increased from 16rem to 20rem (320px) */
   overflow: hidden;
+  z-index: 50;
 }
 
 .sidebar-container::before {
@@ -813,6 +818,11 @@ label, small, .label-text {
   background: rgba(255, 0, 102, 0.1);
 }
 
+/* Main content area adjustments for fixed sidebar */
+main {
+  margin-left: 20rem; /* Same width as sidebar */
+}
+
 /* Responsive improvements */
 @media (max-width: 768px) {
   .lobby-header {
@@ -835,6 +845,16 @@ label, small, .label-text {
   
   .sidebar-container {
     width: 100%;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar-container.open {
+    transform: translateX(0);
+  }
+  
+  main {
+    margin-left: 0;
   }
   
   .sidebar-logo {

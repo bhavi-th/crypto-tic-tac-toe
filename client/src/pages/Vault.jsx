@@ -142,9 +142,9 @@ const Vault = () => {
                   <TrendingUp className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400 font-label">Total Wagered</p>
-                  <p className="text-2xl font-bold accent-text">{totalWagered.toFixed(4)} ETH</p>
-                  <p className="text-xs text-gray-500 mt-1">💎 Total stakes</p>
+                  <p className="text-base text-gray-400 font-label">Total Wagered</p>
+                  <p className="text-3xl font-bold accent-text">{totalWagered.toFixed(4)} ETH</p>
+                  <p className="text-sm text-gray-500 mt-1">💎 Total stakes</p>
                 </div>
               </div>
             </div>
@@ -154,9 +154,9 @@ const Vault = () => {
                   <Trophy className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400 font-label">Total Won</p>
-                  <p className="text-2xl font-bold text-warning">{totalWon.toFixed(4)} ETH</p>
-                  <p className="text-xs text-gray-500 mt-1">🏆 Prize money</p>
+                  <p className="text-base text-gray-400 font-label">Total Won</p>
+                  <p className="text-3xl font-bold text-warning">{totalWon.toFixed(4)} ETH</p>
+                  <p className="text-sm text-gray-500 mt-1">🏆 Prize money</p>
                 </div>
               </div>
             </div>
@@ -166,9 +166,9 @@ const Vault = () => {
                   <CheckCircle2 className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400 font-label">Win Rate</p>
-                  <p className="text-2xl font-bold text-success">{winRate.toFixed(1)}%</p>
-                  <p className="text-xs text-gray-500 mt-1">⚡ Victory ratio</p>
+                  <p className="text-base text-gray-400 font-label">Win Rate</p>
+                  <p className="text-3xl font-bold text-success">{winRate.toFixed(1)}%</p>
+                  <p className="text-sm text-gray-500 mt-1">⚡ Victory ratio</p>
                 </div>
               </div>
             </div>
@@ -205,10 +205,10 @@ const Vault = () => {
         {!loading && games.length === 0 && (
           <div className="game-card text-center py-16">
             <Inbox className="w-24 h-24 mx-auto mb-6 text-surface-a40" />
-            <h3 className="font-heading font-bold text-2xl text-primary-a40 mb-4">
+            <h3 className="font-heading font-bold text-3xl text-primary-a40 mb-4">
               🎮 No games yet
             </h3>
-            <p className="font-body text-lg text-surface-a50 mb-8 max-w-md mx-auto">
+            <p className="font-body text-xl text-surface-a50 mb-8 max-w-md mx-auto">
               ⚡ Start playing Tic-Tac-Toe to build your epic game history and track your performance!
             </p>
             <Link
@@ -243,7 +243,7 @@ const Vault = () => {
                       <div className="flex flex-wrap items-center gap-3 mb-4">
                         <div className="flex items-center gap-2">
                           <span className="status-indicator active"></span>
-                          <h3 className="font-heading font-bold text-xl accent-text">
+                          <h3 className="font-heading font-bold text-2xl accent-text">
                             Game #{game.id}
                           </h3>
                         </div>
@@ -264,14 +264,14 @@ const Vault = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div className="flex items-center gap-3">
                           <Users className="w-4 h-4 text-accent" />
-                          <span className="text-sm text-gray-400 font-label">Players:</span>
-                          <span className="text-sm font-mono accent-text bg-surface-a10 px-3 py-1 rounded-lg">
+                          <span className="text-base text-gray-400 font-label">Players:</span>
+                          <span className="text-base font-mono accent-text bg-surface-a10 px-3 py-1 rounded-lg">
                             {formatAddress(game.player1)} vs {game.player2 && game.player2 !== ethers.ZeroAddress ? formatAddress(game.player2) : 'Waiting...'}
                           </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <Trophy className="w-4 h-4 text-warning" />
-                          <span className="text-sm text-gray-400 font-label">Wager:</span>
+                          <span className="text-base text-gray-400 font-label">Wager:</span>
                           <div className="wager-badge">
                             <span>💎</span>
                             {game.wager} ETH
@@ -279,13 +279,13 @@ const Vault = () => {
                         </div>
                         <div className="flex items-center gap-3">
                           <Clock className="w-4 h-4 text-accent" />
-                          <span className="text-sm text-gray-400 font-label">Last move:</span>
-                          <span className="text-sm accent-text font-semibold">{getTimeAgo(game.lastMoveTime)}</span>
+                          <span className="text-base text-gray-400 font-label">Last move:</span>
+                          <span className="text-base accent-text font-semibold">{getTimeAgo(game.lastMoveTime)}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <ExternalLink className="w-4 h-4 text-accent" />
-                          <span className="text-sm text-gray-400 font-label">Created:</span>
-                          <span className="text-sm accent-text font-semibold">{formatTime(game.lastMoveTime)}</span>
+                          <span className="text-base text-gray-400 font-label">Created:</span>
+                          <span className="text-base accent-text font-semibold">{formatTime(game.lastMoveTime)}</span>
                         </div>
                       </div>
                     </div>

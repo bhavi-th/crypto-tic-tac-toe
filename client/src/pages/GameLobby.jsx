@@ -80,8 +80,12 @@ const GameLobby = () => {
     <div className="flex-1 px-6 md:px-10 py-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="lobby-header">
-              <h1 className="font-heading font-bold text-5xl accent-text mb-4">
+        <div className="space-y-6">
+          {/* Header and Create Game Side by Side */}
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
+            {/* Header Section - Takes more space */}
+            <div className="flex-1 lobby-header">
+              <h1 className="font-heading font-bold text-4xl lg:text-5xl accent-text mb-4">
                 Tic-Tac-Toe Arena
               </h1>
               <p className="font-body text-gray-400 text-xl max-w-2xl">
@@ -101,12 +105,10 @@ const GameLobby = () => {
                   <span>Fast Games</span>
                 </div>
               </div>
-        </div>
-
-        
-        <div className="space-y-6">
-          {/* Create Game Section */}
-          <div className="create-game-card max-w-md mx-auto lg:mx-0">
+            </div>
+            
+            {/* Create Game Section - Fixed width */}
+            <div className="create-game-card max-w-md lg:max-w-sm xl:max-w-md">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-primary flex items-center justify-center">
                 <Plus className="w-6 h-6 text-white" />
@@ -161,6 +163,7 @@ const GameLobby = () => {
                 </div>
               </div>
             )}
+          </div>
           </div>
 
           {/* Your Games - Full Width */}
