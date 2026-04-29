@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { Plus, Clock, Users, Trophy, ExternalLink } from 'lucide-react';
+import { Plus, Clock, Users, Trophy, ExternalLink, Settings } from 'lucide-react';
 import { ethers } from 'ethers';
 import { useGame } from '../hooks/useGame';
 import { useWeb3Context } from '../contexts/useWeb3Context';
+import RewardPoolAdmin from '../components/RewardPoolAdmin';
 
 const GameLobby = () => {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ const GameLobby = () => {
   
   const [wagerAmount, setWagerAmount] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [gasCostInfo, setGasCostInfo] = useState({ moveCost: '0', totalGameCost: '0' });
 
   useEffect(() => {
@@ -104,6 +106,13 @@ const GameLobby = () => {
                   <Clock className="w-4 h-4 text-accent" />
                   <span>Fast Games</span>
                 </div>
+                <button
+                  onClick={() => setShowAdminPanel(!showAdminPanel)}
+                  className="game-stats hover:border-accent transition-all"
+                >
+                  <Settings className="w-4 h-4 text-accent" />
+                  <span>Reward Pool</span>
+                </button>
               </div>
             </div>
             
@@ -236,6 +245,11 @@ const GameLobby = () => {
               </div>
             )}
           </div>
+
+          {/* Admin Panel - Only show when toggled */}
+          {showAdminPanel && (
+            <RewardPoolAdmin />
+          )}
 
           {/* Available Games - Full Width */}
           <div className="game-card">

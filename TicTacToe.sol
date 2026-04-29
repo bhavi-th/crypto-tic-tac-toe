@@ -21,6 +21,13 @@ contract TicTacToe {
     uint256 public gameCounter;
     uint256 public constant TIMEOUT_DURATION = 5 minutes;
     
+    // Reward pool system
+    uint256 public rewardPool;
+    address public owner;
+    uint256 public constant BASE_REWARD = 0.01 ether; // Base reward per win
+    uint256 public constant REWARD_PERCENTAGE = 10; // 10% of wager as bonus
+    uint256 public constant MIN_WAGER_FOR_REWARD = 0.005 ether; // Minimum wager to qualify for reward
+    
     // Pre-paid gas system
     uint256 public constant MAX_MOVES_PER_GAME = 9;
     uint256 public constant MOVE_GAS_COST = 0.00018 ether; // Average gas cost per move
@@ -38,12 +45,79 @@ contract TicTacToe {
     event GameOver(uint256 indexed gameId, GameStatus status, address indexed winner);
     event TimeoutClaimed(uint256 indexed gameId, address indexed claimer);
     
-    function createGame() external payable returns (uint256) {
-        require(msg.value > TOTAL_GAME_GAS, "Wager must cover gas costs");
+    // Reward pool events
+    event RewardPoolFunded(address indexed funder, uint256 amount);
+    event RewardPaid(uint256 indexed gameId, address indexed winner, uint256 rewardAmount);
+    event RewardPoolDepleted(uint256 remainingBalance);
+    
+    constructor() {
+        owner = msg.sender;
+    }
+    
+    // Reward pool management functions
+    function fundRewardPool() external payable {
+        require(msg.value > 0, "Must send ETH to fund reward pool");
+        rewardPool += msg.value;
+        emit RewardPoolFunded(msg.sender, msg.value);
+    }
+    
+    function getRewardPoolBalance() external view returns (uint256) {
+        return rewardPool;
+    }
+    
+    function calculateReward(uint256 _wager) internal pure returns (uint256) {
+        // Only give rewards for wagers above minimum threshold
+        if (_wager < MIN_WAGER_FOR_REWARD) {
+            return 0;
+        }
         
-        // Separate wager and gas deposit
-        uint256 wager = msg.value - TOTAL_GAME_GAS;
-        require(wager > 0, "Wager must be greater than 0");
+        // Calculate reward as percentage of wager, but at least base reward
+        uint256 percentageReward = (_wager * REWARD_PERCENTAGE) / 100;
+        return percentageReward > BASE_REWARD ? percentageReward : BASE_REWARD;
+    }
+    
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner can call this function");
+        _;
+    }
+    
+    function claimReward(uint256 _gameId) external {
+        Game storage game = games[_gameId];
+        require(game.status == GameStatus.Player1Won || game.status == GameStatus.Player2Won, "Game is not a winning game");
+        
+        address winner;
+        if (game.status == GameStatus.Player1Won) {
+            winner = game.player1;
+        } else {
+            winner = game.player2;
+        }
+        
+        require(msg.sender == winner, "Only winner can claim reward");
+        
+        // Calculate reward amount
+        uint256 rewardAmount = calculateReward(game.wager);
+        require(rewardAmount > 0, "No reward available for this game");
+        require(rewardAmount <= rewardPool, "Insufficient reward pool balance");
+        
+        // Transfer reward to winner
+        rewardPool -= rewardAmount;
+        emit RewardPaid(_gameId, winner, rewardAmount);
+        
+        (bool success, ) = payable(winner).call{value: rewardAmount}("");
+        require(success, "Reward transfer failed");
+    }
+    
+    function withdrawFromRewardPool(uint256 _amount) external onlyOwner {
+        require(_amount <= rewardPool, "Insufficient reward pool balance");
+        rewardPool -= _amount;
+        (bool success, ) = payable(owner).call{value: _amount}("");
+        require(success, "Withdrawal failed");
+    }
+    
+    function createGame() external payable returns (uint256) {
+        require(msg.value > 0, "Wager must be greater than 0");
+        
+        uint256 wager = msg.value;
         
         gameCounter++;
         games[gameCounter] = Game({
@@ -56,14 +130,12 @@ contract TicTacToe {
             currentTurn: Player.Player1
         });
         
-        // Store gas deposit for player1
-        gameGasDeposits[gameCounter][msg.sender] = TOTAL_GAME_GAS;
+        // No gas deposits - players pay their own gas
         gameMovesCount[gameCounter] = 0;
         
         playerGames[msg.sender].push(gameCounter);
         
         emit GameCreated(gameCounter, msg.sender, wager);
-        emit GasDeposited(gameCounter, msg.sender, TOTAL_GAME_GAS);
         return gameCounter;
     }
     
@@ -71,20 +143,18 @@ contract TicTacToe {
         Game storage game = games[_gameId];
         require(game.status == GameStatus.Empty, "Game not available");
         require(game.player2 == address(0), "Game already has two players");
-        require(msg.value == game.wager + TOTAL_GAME_GAS, "Must include wager and gas deposit");
+        require(msg.value == game.wager, "Must match exact wager amount");
         require(msg.sender != game.player1, "Cannot join your own game");
         
         game.player2 = msg.sender;
         game.status = GameStatus.Active;
         game.lastMoveTime = block.timestamp;
         
-        // Store gas deposit for player2
-        gameGasDeposits[_gameId][msg.sender] = TOTAL_GAME_GAS;
+        // No gas deposits - players pay their own gas
         
         playerGames[msg.sender].push(_gameId);
         
         emit GameJoined(_gameId, msg.sender);
-        emit GasDeposited(_gameId, msg.sender, TOTAL_GAME_GAS);
     }
     
     function makeMove(uint256 _gameId, uint8 _position) external {
@@ -92,9 +162,6 @@ contract TicTacToe {
         require(game.status == GameStatus.Active, "Game not active");
         require(_position < 9, "Invalid position");
         require(game.board[_position] == 0, "Position already taken");
-        
-        // Check gas deposit
-        require(gameGasDeposits[_gameId][msg.sender] >= MOVE_GAS_COST, "Insufficient gas deposit");
         
         // Check if it's the player's turn
         if (game.currentTurn == Player.Player1) {
@@ -109,12 +176,10 @@ contract TicTacToe {
         
         game.lastMoveTime = block.timestamp;
         
-        // Deduct gas cost and track moves
-        gameGasDeposits[_gameId][msg.sender] -= MOVE_GAS_COST;
+        // Track moves count
         gameMovesCount[_gameId]++;
         
         emit MoveMade(_gameId, msg.sender, _position);
-        emit GasUsed(_gameId, msg.sender, MOVE_GAS_COST);
         
         // Check for win or draw
         GameStatus result = checkGameResult(game.board);
@@ -178,8 +243,26 @@ contract TicTacToe {
         emit TimeoutClaimed(_gameId, winner);
         emit GameOver(_gameId, game.status, winner);
         
-        // Transfer entire pot to winner
-        (bool success, ) = (payable(winner)).call{value: game.wager * 2}("");
+        // Calculate total wager pool (both players' wagers)
+        uint256 totalWagerPool = game.wager * 2;
+        
+        // Calculate reward for timeout winner
+        uint256 rewardAmount = calculateReward(game.wager);
+        
+        // Transfer entire pot + reward bonus to winner
+        uint256 winnerPayout = totalWagerPool;
+        
+        // Add reward if available
+        if (rewardAmount > 0 && rewardAmount <= rewardPool) {
+            winnerPayout += rewardAmount;
+            rewardPool -= rewardAmount;
+            emit RewardPaid(_gameId, winner, rewardAmount);
+        } else if (rewardAmount > 0) {
+            // Not enough reward pool, emit depletion event
+            emit RewardPoolDepleted(rewardPool);
+        }
+        
+        (bool success, ) = (payable(winner)).call{value: winnerPayout}("");
         require(success, "Transfer to winner failed");
     }
     
@@ -229,45 +312,56 @@ contract TicTacToe {
             _status == GameStatus.Player1Won ? game.player1 : 
             _status == GameStatus.Player2Won ? game.player2 : address(0));
         
-        // Calculate gas refunds
-        uint256 player1Refund = gameGasDeposits[_gameId][game.player1];
-        uint256 player2Refund = gameGasDeposits[_gameId][game.player2];
+        // Calculate total wager pool (both players' wagers)
+        uint256 totalWagerPool = game.wager * 2;
+        
+        // Calculate reward for winners
+        uint256 rewardAmount = 0;
+        if (_status == GameStatus.Player1Won || _status == GameStatus.Player2Won) {
+            rewardAmount = calculateReward(game.wager);
+        }
         
         // Handle wager payouts
         if (_status == GameStatus.Player1Won) {
-            (bool success, ) = (payable(game.player1)).call{value: game.wager * 2 + player1Refund}("");
+            // Player1 wins both wagers + reward bonus
+            uint256 payout = totalWagerPool;
+            
+            // Add reward if available
+            if (rewardAmount > 0 && rewardAmount <= rewardPool) {
+                payout += rewardAmount;
+                rewardPool -= rewardAmount;
+                emit RewardPaid(_gameId, game.player1, rewardAmount);
+            } else if (rewardAmount > 0) {
+                // Not enough reward pool, emit depletion event
+                emit RewardPoolDepleted(rewardPool);
+            }
+            
+            (bool success, ) = (payable(game.player1)).call{value: payout}("");
             require(success, "Transfer to player 1 failed");
-            
-            // Refund remaining gas to player2
-            if (player2Refund > 0) {
-                (bool refundSuccess, ) = (payable(game.player2)).call{value: player2Refund}("");
-                require(refundSuccess, "Refund to player 2 failed");
-                emit GasRefunded(_gameId, game.player2, player2Refund);
-            }
         } else if (_status == GameStatus.Player2Won) {
-            (bool success, ) = (payable(game.player2)).call{value: game.wager * 2 + player2Refund}("");
-            require(success, "Transfer to player 2 failed");
+            // Player2 wins both wagers + reward bonus
+            uint256 payout = totalWagerPool;
             
-            // Refund remaining gas to player1
-            if (player1Refund > 0) {
-                (bool refundSuccess, ) = (payable(game.player1)).call{value: player1Refund}("");
-                require(refundSuccess, "Refund to player 1 failed");
-                emit GasRefunded(_gameId, game.player1, player1Refund);
+            // Add reward if available
+            if (rewardAmount > 0 && rewardAmount <= rewardPool) {
+                payout += rewardAmount;
+                rewardPool -= rewardAmount;
+                emit RewardPaid(_gameId, game.player2, rewardAmount);
+            } else if (rewardAmount > 0) {
+                // Not enough reward pool, emit depletion event
+                emit RewardPoolDepleted(rewardPool);
             }
-        } else if (_status == GameStatus.Draw) {
-            // Split the wager and return gas refunds
-            (bool success1, ) = (payable(game.player1)).call{value: game.wager + player1Refund}("");
-            require(success1, "Transfer to player 1 failed");
-            (bool success2, ) = (payable(game.player2)).call{value: game.wager + player2Refund}("");
-            require(success2, "Transfer to player 2 failed");
             
-            emit GasRefunded(_gameId, game.player1, player1Refund);
-            emit GasRefunded(_gameId, game.player2, player2Refund);
+            (bool success, ) = (payable(game.player2)).call{value: payout}("");
+            require(success, "Transfer to player 2 failed");
+        } else if (_status == GameStatus.Draw) {
+            // Split the wager pool evenly (no rewards for draws)
+            uint256 eachWagerReturn = game.wager;
+            (bool success1, ) = (payable(game.player1)).call{value: eachWagerReturn}("");
+            require(success1, "Transfer to player 1 failed");
+            (bool success2, ) = (payable(game.player2)).call{value: eachWagerReturn}("");
+            require(success2, "Transfer to player 2 failed");
         }
-        
-        // Clear gas deposits
-        gameGasDeposits[_gameId][game.player1] = 0;
-        gameGasDeposits[_gameId][game.player2] = 0;
     }
     
     // View functions

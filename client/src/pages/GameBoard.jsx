@@ -20,12 +20,17 @@ const GameBoard = () => {
     isMyTurn: checkMyTurn,
     getGameGasDeposit,
     getGameMovesCount,
-    getGasCostInfo
+    getGasCostInfo,
+    getRewardPoolBalance,
+    calculateReward,
+    claimReward
   } = useGame();
   
   const [myTurn, setMyTurn] = useState(false);
   const [timeUntilTimeout, setTimeUntilTimeout] = useState(null);
   const [movesCount, setMovesCount] = useState(0);
+  const [rewardPoolBalance, setRewardPoolBalance] = useState('0');
+  const [potentialReward, setPotentialReward] = useState('0');
 
   useEffect(() => {
     if (gameId) {
@@ -73,6 +78,30 @@ const GameBoard = () => {
       return () => clearInterval(refreshInterval);
     }
   }, [gameId, fetchGameDetails, getGameMovesCount]);
+
+  // Fetch reward pool balance and calculate potential reward
+  useEffect(() => {
+    const fetchRewardData = async () => {
+      try {
+        const balance = await getRewardPoolBalance();
+        setRewardPoolBalance(balance);
+        
+        if (currentGame && currentGame.wager) {
+          const reward = await calculateReward(parseFloat(currentGame.wager));
+          setPotentialReward(reward);
+        }
+      } catch (error) {
+        console.error('Error fetching reward data:', error);
+      }
+    };
+    
+    fetchRewardData();
+    
+    // Refresh reward pool balance every 30 seconds
+    const rewardInterval = setInterval(fetchRewardData, 30000);
+    
+    return () => clearInterval(rewardInterval);
+  }, [currentGame, getRewardPoolBalance, calculateReward]);
 
   const checkTurnStatus = async () => {
     if (!currentGame || !selectedAccount) return;
@@ -136,6 +165,10 @@ const GameBoard = () => {
     }
     
     await claimTimeout(gameId);
+  };
+
+  const handleClaimReward = async () => {
+    await claimReward(gameId);
   };
 
   const formatAddress = (address) => {
@@ -265,12 +298,23 @@ const GameBoard = () => {
                        isWinner ? 'Congratulations! You won!' : 'Better luck next time!'}
                     </p>
                   </div>
-                  <button
-                    onClick={() => navigate('/lobby')}
-                    className="skeleton-button px-8 py-3"
-                  >
-                    Back to Lobby
-                  </button>
+                  <div className="flex flex-col gap-3">
+                    {isWinner && (
+                      <button
+                        onClick={handleClaimReward}
+                        disabled={loading}
+                        className="px-8 py-3 bg-gradient-to-r from-warning to-orange-400 text-white rounded-lg font-label font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {loading ? 'Claiming...' : '🎁 Claim Reward'}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => navigate('/lobby')}
+                      className="skeleton-button px-8 py-3"
+                    >
+                      Back to Lobby
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -330,6 +374,15 @@ const GameBoard = () => {
                     {(parseFloat(currentGame.wager) * 2).toFixed(4)} ETH
                   </p>
                 </div>
+                
+                {potentialReward > 0 && (
+                  <div>
+                    <p className="text-xs text-surface-a50 mb-1">🎁 Potential Reward</p>
+                    <p className="text-sm font-semibold text-warning">
+                      {parseFloat(potentialReward).toFixed(4)} ETH
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

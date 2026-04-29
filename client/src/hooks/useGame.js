@@ -20,18 +20,14 @@ export const useGame = (navigate = null) => {
     setLoading(true);
     try {
       const wagerWei = ethers.parseEther(wagerAmount.toString());
-      const gasCostWei = ethers.parseEther('0.00162'); // Pre-paid gas cost
-      const totalWei = wagerWei + gasCostWei;
       
       console.log('Create Game Debug:', {
         wagerAmount,
         wagerWei: wagerWei.toString(),
-        gasCostWei: gasCostWei.toString(),
-        totalWei: totalWei.toString(),
-        totalEth: ethers.formatEther(totalWei)
+        totalEth: ethers.formatEther(wagerWei)
       });
       
-      const tx = await web3State.contractInstance.createGame({ value: totalWei });
+      const tx = await web3State.contractInstance.createGame({ value: wagerWei });
       
       toast.info('Creating game...');
       const receipt = await tx.wait();
@@ -50,7 +46,7 @@ export const useGame = (navigate = null) => {
         const parsedEvent = web3State.contractInstance.interface.parseLog(gameCreatedEvent);
         const gameId = parsedEvent.args.gameId;
         
-        toast.success(`Game ${gameId} created! Wager: ${wagerAmount} ETH + Gas: ${ethers.formatEther(gasCostWei)} ETH`);
+        toast.success(`Game ${gameId} created! Wager: ${wagerAmount} ETH`);
         await fetchAvailableGames();
         await fetchPlayerGames();
         
@@ -85,39 +81,17 @@ export const useGame = (navigate = null) => {
       
       console.log('Joining game with exact wager amount:', ethers.formatEther(wagerWei), 'ETH');
       
-      // Try joining with just the wager amount (what the user sees)
-      try {
-        const joinTx = await web3State.contractInstance.joinGame(gameId, { value: wagerWei });
-        
-        toast.info('Joining game...');
-        const receipt = await joinTx.wait();
-        
-        toast.success(`Joined game ${gameId}! Wager: ${ethers.formatEther(wagerWei)} ETH`);
-        await fetchAvailableGames();
-        await fetchPlayerGames();
-        await fetchGameDetails(gameId);
-        
-        return true;
-        
-      } catch (error) {
-        // If direct wager fails, the contract might expect wager + gas
-        console.log('Direct wager failed, trying with standard gas addition...');
-        
-        const gasCostWei = ethers.parseEther('0.00162');
-        const totalWei = wagerWei + gasCostWei;
-        
-        const joinTx = await web3State.contractInstance.joinGame(gameId, { value: totalWei });
-        
-        toast.info('Joining game...');
-        const receipt = await joinTx.wait();
-        
-        toast.success(`Joined game ${gameId}! Wager: ${ethers.formatEther(wagerWei)} ETH + Gas: ${ethers.formatEther(gasCostWei)} ETH`);
-        await fetchAvailableGames();
-        await fetchPlayerGames();
-        await fetchGameDetails(gameId);
-        
-        return true;
-      }
+      const joinTx = await web3State.contractInstance.joinGame(gameId, { value: wagerWei });
+      
+      toast.info('Joining game...');
+      const receipt = await joinTx.wait();
+      
+      toast.success(`Joined game ${gameId}! Wager: ${ethers.formatEther(wagerWei)} ETH`);
+      await fetchAvailableGames();
+      await fetchPlayerGames();
+      await fetchGameDetails(gameId);
+      
+      return true;
     } catch (error) {
       console.error('Join game error:', error);
       toast.error(error.message || 'Failed to join game');
@@ -539,6 +513,93 @@ export const useGame = (navigate = null) => {
   }, [web3State.contractInstance, fetchAvailableGames, fetchPlayerGames]);
 
   
+  // Reward pool functions
+  const fundRewardPool = useCallback(async (amount) => {
+    if (!web3State.contractInstance || !web3State.selectedAccount) {
+      toast.error('Please connect your wallet first');
+      return false;
+    }
+
+    setLoading(true);
+    try {
+      const amountWei = ethers.parseEther(amount.toString());
+      const tx = await web3State.contractInstance.fundRewardPool({ value: amountWei });
+      
+      toast.info('Funding reward pool...');
+      await tx.wait();
+      
+      toast.success(`Reward pool funded with ${amount} ETH!`);
+      return true;
+    } catch (error) {
+      console.error('Fund reward pool error:', error);
+      toast.error(error.message || 'Failed to fund reward pool');
+    } finally {
+      setLoading(false);
+    }
+    return false;
+  }, [web3State]);
+
+  const getRewardPoolBalance = useCallback(async () => {
+    if (!web3State.contractInstance) return '0';
+    
+    try {
+      const balance = await web3State.contractInstance.getRewardPoolBalance();
+      return ethers.formatEther(balance);
+    } catch (error) {
+      console.error('Get reward pool balance error:', error);
+      return '0';
+    }
+  }, [web3State]);
+
+  const calculateReward = useCallback(async (wagerAmount) => {
+    if (!web3State.contractInstance) return '0';
+    
+    try {
+      const wagerWei = ethers.parseEther(wagerAmount.toString());
+      // Since calculateReward is internal, we'll estimate based on contract constants
+      const MIN_WAGER_FOR_REWARD = 0.005; // From contract
+      const BASE_REWARD = 0.01; // From contract
+      const REWARD_PERCENTAGE = 10; // From contract
+      
+      if (wagerAmount < MIN_WAGER_FOR_REWARD) {
+        return '0';
+      }
+      
+      const percentageReward = (wagerAmount * REWARD_PERCENTAGE) / 100;
+      const reward = percentageReward > BASE_REWARD ? percentageReward : BASE_REWARD;
+      return reward.toString();
+    } catch (error) {
+      console.error('Calculate reward error:', error);
+      return '0';
+    }
+  }, []);
+
+  const claimReward = useCallback(async (gameId) => {
+    if (!web3State.contractInstance || !web3State.selectedAccount) {
+      toast.error('Please connect your wallet first');
+      return false;
+    }
+
+    setLoading(true);
+    try {
+      const tx = await web3State.contractInstance.claimReward(gameId);
+      
+      toast.info('Claiming reward...');
+      await tx.wait();
+      
+      toast.success('Reward claimed successfully!');
+      await fetchGameDetails(gameId);
+      
+      return true;
+    } catch (error) {
+      console.error('Claim reward error:', error);
+      toast.error(error.message || 'Failed to claim reward');
+    } finally {
+      setLoading(false);
+    }
+    return false;
+  }, [web3State]);
+
   return {
     games,
     currentGame,
@@ -557,6 +618,11 @@ export const useGame = (navigate = null) => {
     fetchAvailableGames,
     isMyTurn,
     setCurrentGame,
-    getGameStatusText
+    getGameStatusText,
+    // Reward pool functions
+    fundRewardPool,
+    getRewardPoolBalance,
+    calculateReward,
+    claimReward
   };
 };
