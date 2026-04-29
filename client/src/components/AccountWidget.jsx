@@ -66,12 +66,12 @@ const AccountWidget = () => {
       <button
         ref={triggerRef}
         onClick={() => setOpen((v) => !v)}
-        className="w-full bg-surface-tonal-a10 hover:bg-surface-tonal-a20 border border-surface-tonal-a20 rounded-xl p-3 transition-colors text-left"
+        className="account-widget-trigger w-full text-left"
       >
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-2">
           <span
-            className={`w-2 h-2 rounded-full ${
-              onCorrectNetwork ? 'bg-success-a0' : 'bg-danger-a0'
+            className={`network-indicator ${
+              onCorrectNetwork ? 'correct' : 'incorrect'
             }`}
           />
           <span className="font-label text-xs text-surface-a50">{networkName}</span>
@@ -86,52 +86,54 @@ const AccountWidget = () => {
       {open && (
         <div
           ref={popoverRef}
-          className="absolute bottom-full mb-2 left-0 right-0 skeleton-card shadow-2xl overflow-hidden z-50"
+          className="account-popover absolute bottom-full mb-2 left-0 right-0 z-50"
         >
-          {/* Network section */}
-          <div className="p-4 border-b border-surface-tonal-a20">
-            <p className="font-label text-xs text-gray-500 uppercase tracking-wider mb-2">
+          {/* Enhanced Network section */}
+          <div className="popover-section">
+            <p className="section-title">
               Network
             </p>
-            <div className="flex items-center gap-2">
+            <div className={`network-status ${
+              onCorrectNetwork ? 'correct' : 'incorrect'
+            }`}>
               {onCorrectNetwork ? (
                 <>
-                  <CheckCircle2 className="w-4 h-4 text-success" />
-                  <span className="font-body text-sm accent-text">{networkName}</span>
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{networkName}</span>
                 </>
               ) : (
                 <>
-                  <AlertCircle className="w-4 h-4 text-danger" />
-                  <span className="font-body text-sm text-danger">Wrong network</span>
+                  <AlertCircle className="w-4 h-4" />
+                  <span>Wrong network</span>
                 </>
               )}
             </div>
             {!onCorrectNetwork && (
               <button
                 onClick={switchToSepolia}
-                className="mt-3 w-full text-xs font-label font-semibold skeleton-button rounded-lg px-3 py-2"
+                className="switch-network-btn"
               >
                 Switch to Sepolia
               </button>
             )}
           </div>
 
-          {/* Account section */}
-          <div className="p-4 border-b border-surface-tonal-a20">
-            <p className="font-label text-xs text-gray-500 uppercase tracking-wider mb-2">
+          {/* Enhanced Account section */}
+          <div className="popover-section">
+            <p className="section-title">
               Account
             </p>
             <div className="flex items-center gap-2 mb-3">
-              <span className="font-label text-xs accent-text break-all flex-1">
+              <span className="account-address">
                 {selectedAccount}
               </span>
               <button
                 onClick={copyAddress}
-                className="text-surface-a40 hover:text-primary-a30 transition-colors"
+                className={`copy-btn ${copied ? 'copied' : ''}`}
                 title="Copy address"
               >
                 {copied ? (
-                  <CheckCircle2 className="w-4 h-4 text-success-a0" />
+                  <CheckCircle2 className="w-4 h-4" />
                 ) : (
                   <Copy className="w-4 h-4" />
                 )}
@@ -144,27 +146,27 @@ const AccountWidget = () => {
               href={`https://sepolia.etherscan.io/address/${selectedAccount}`}
               target="_blank"
               rel="noreferrer"
-              className="mt-2 inline-flex items-center gap-1 px-3 py-1 text-xs font-label skeleton-button rounded"
+              className="etherscan-link"
             >
               View on Etherscan <ExternalLink className="w-3 h-3" />
             </a>
           </div>
 
-          {/* Actions */}
-          <div className="p-2">
+          {/* Enhanced Actions */}
+          <div className="popover-section">
             <button
               onClick={() => {
                 setOpen(false);
                 switchAccount();
               }}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm font-label text-primary-a40 hover:bg-surface-tonal-a20 rounded-lg transition-colors"
+              className="action-btn"
             >
               <ArrowLeftRight className="w-4 h-4" />
               Switch Account
             </button>
             <button
               onClick={handleDisconnect}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm font-label text-danger-a10 hover:bg-surface-tonal-a20 rounded-lg transition-colors"
+              className="action-btn danger"
             >
               <LogOut className="w-4 h-4" />
               Disconnect

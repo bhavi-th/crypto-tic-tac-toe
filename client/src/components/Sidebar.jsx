@@ -9,39 +9,39 @@ const navItems = [
 
 const Sidebar = () => {
   return (
-    <aside className="w-64 bg-surface-tonal-a0 border-r border-surface-tonal-a20 flex flex-col">
-      {/* Logo */}
-      <div className="px-5 py-5 border-b border-surface-tonal-a20">
-        <div className="flex items-center gap-2">
-          <Gamepad2 className="w-6 h-6 text-primary-a20" />
-          <span className="font-heading font-bold text-lg text-primary-a40">
+    <aside className="sidebar-container w-64 flex flex-col">
+      {/* Enhanced Logo */}
+      <div className="sidebar-logo">
+        <div className="sidebar-logo-content">
+          <div className="sidebar-logo-icon">
+            <Gamepad2 className="w-6 h-6 text-white" />
+          </div>
+          <span className="sidebar-logo-text">
             TicTacToe Arena
           </span>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-3">
+      {/* Enhanced Navigation */}
+      <nav className="sidebar-nav">
         {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg font-label text-sm mb-1 transition-colors ${
-                isActive
-                  ? 'bg-primary-a0 text-white font-semibold'
-                  : 'text-surface-a50 hover:bg-surface-tonal-a10 hover:text-primary-a40'
+              `nav-item ${
+                isActive ? 'active' : ''
               }`
             }
           >
-            <Icon className="w-4 h-4" />
+            <Icon className="nav-icon" />
             {label}
           </NavLink>
         ))}
       </nav>
 
-      {/* Account widget */}
-      <div className="p-3 border-t border-surface-tonal-a20">
+      {/* Enhanced Account widget */}
+      <div className="p-4 border-t border-surface-tonal-a20">
         <AccountWidget />
       </div>
     </aside>
