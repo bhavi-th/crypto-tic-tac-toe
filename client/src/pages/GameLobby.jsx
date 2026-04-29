@@ -104,210 +104,206 @@ const GameLobby = () => {
         </div>
 
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Create Game */}
-          <div className="lg:col-span-1">
-            <div className="create-game-card">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-primary flex items-center justify-center">
-                  <Plus className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="font-heading font-bold text-2xl accent-text">
-                  Create New Game
-                </h2>
+        <div className="space-y-6">
+          {/* Create Game Section */}
+          <div className="create-game-card max-w-md mx-auto lg:mx-0">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-primary flex items-center justify-center">
+                <Plus className="w-6 h-6 text-white" />
               </div>
-
-              {!showCreateForm ? (
-                <button
-                  onClick={() => setShowCreateForm(true)}
-                  className="connect-wallet-btn w-full flex items-center justify-center gap-3 text-lg"
-                >
-                  <Plus className="w-5 h-5" />
-                  Create New Game
-                </button>
-              ) : (
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-bold text-primary-a0 mb-3 font-label">
-                      💰 Wager Amount (ETH)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.001"
-                      min="0.001"
-                      value={wagerAmount}
-                      onChange={(e) => setWagerAmount(e.target.value)}
-                      placeholder="0.01"
-                      className="enhanced-input w-full"
-                    />
-                    <p className="text-xs text-gray-500 mt-2">Minimum: 0.001 ETH</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleCreateGame}
-                      disabled={loading || !wagerAmount}
-                      className="flex-1 connect-wallet-btn disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {loading ? <div className="loading-spinner mx-auto" /> : 'Create Game'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowCreateForm(false);
-                        setWagerAmount('');
-                      }}
-                      className="skeleton-button px-6"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
+              <h2 className="font-heading font-bold text-2xl accent-text">
+                Create New Game
+              </h2>
             </div>
 
-            {/* My Games */}
-            <div className="game-card mt-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-success to-green-400 flex items-center justify-center">
-                  <Trophy className="w-6 h-6 text-white" />
+            {!showCreateForm ? (
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="connect-wallet-btn w-full flex items-center justify-center gap-3 text-lg"
+              >
+                <Plus className="w-5 h-5" />
+                Create New Game
+              </button>
+            ) : (
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-bold text-primary-a0 mb-3 font-label">
+                    💰 Wager Amount (ETH)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.001"
+                    min="0.001"
+                    value={wagerAmount}
+                    onChange={(e) => setWagerAmount(e.target.value)}
+                    placeholder="0.01"
+                    className="enhanced-input w-full"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">Minimum: 0.001 ETH</p>
                 </div>
-                <h2 className="font-heading font-bold text-2xl accent-text">
-                  Your Games
-                </h2>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleCreateGame}
+                    disabled={loading || !wagerAmount}
+                    className="flex-1 connect-wallet-btn disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? <div className="loading-spinner mx-auto" /> : 'Create Game'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowCreateForm(false);
+                      setWagerAmount('');
+                    }}
+                    className="skeleton-button px-6"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
-
-              {games.length === 0 ? (
-                <div className="text-center py-12">
-                  <Trophy className="w-16 h-16 mx-auto mb-4 text-surface-a40" />
-                  <p className="text-surface-a40 text-lg mb-2">No games yet</p>
-                  <p className="text-surface-a50 text-sm">
-                    Create one or join an existing game to start playing!
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-4">
-                  {games.map((game) => (
-                    <div
-                      key={game.id}
-                      className="game-card"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <span className="status-indicator active"></span>
-                          <span className="font-label text-lg font-bold accent-text">
-                            Game #{game.id}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <Clock className="w-4 h-4" />
-                          {Math.floor((Date.now() / 1000 - game.lastMoveTime) / 60)}m ago
-                        </div>
-                      </div>
-                      
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm text-gray-400">Host:</span>
-                          <span className="text-sm font-mono accent-text bg-surface-a10 px-3 py-1 rounded-lg">
-                            {formatAddress(game.player1)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-400">Wager:</span>
-                          <div className="wager-badge">
-                            <span>💎</span>
-                            {game.wager} ETH
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => navigate(`/game/${game.id}`)}
-                        className={`w-full py-3 font-bold rounded-lg transition-all ${
-                          game.status === 'Active' 
-                            ? 'bg-gradient-to-r from-success to-green-400 text-white hover:shadow-lg' 
-                            : 'bg-gradient-to-r from-warning to-orange-400 text-white hover:shadow-lg'
-                        }`}
-                      >
-                        {game.status === 'Active' ? '🎮 Continue Game' : 'View Details'}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
-          {/* Right: Available Games */}
-          <div className="lg:col-span-2">
-            <div className="game-card">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-primary flex items-center justify-center">
-                  <Users className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="font-heading font-bold text-2xl accent-text">
-                  Available Games
-                </h2>
+          {/* Your Games - Full Width */}
+          <div className="game-card">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-success to-green-400 flex items-center justify-center">
+                <Trophy className="w-6 h-6 text-white" />
               </div>
-
-              {availableGames.length === 0 ? (
-                <div className="text-center py-16">
-                  <Users className="w-20 h-20 mx-auto mb-6 text-surface-a40" />
-                  <p className="text-surface-a40 text-xl mb-3">No available games</p>
-                  <p className="text-surface-a50 text-base max-w-md mx-auto">
-                    🚀 Be the first to create a game and wait for an opponent to join!
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {availableGames.filter(game => !isGameExpired(game.lastMoveTime)).map((game) => (
-                    <div
-                      key={game.id}
-                      className="game-card"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <span className="status-indicator waiting"></span>
-                          <span className="font-label text-lg font-bold accent-text">
-                            Game #{game.id}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <Clock className="w-4 h-4" />
-                          {Math.floor((Date.now() / 1000 - game.lastMoveTime) / 60)}m ago
-                        </div>
-                      </div>
-                      
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm text-gray-400">Host:</span>
-                          <span className="text-sm font-mono accent-text bg-surface-a10 px-3 py-1 rounded-lg">
-                            {formatAddress(game.player1)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-400">Wager:</span>
-                          <div className="wager-badge">
-                            <span>💎</span>
-                            {game.wager} ETH
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => handleJoinGame(game.id)}
-                        disabled={loading || isMyGame(game.player1, game.player2)}
-                        className={`w-full py-3 font-bold rounded-lg transition-all ${
-                          isMyGame(game.player1, game.player2)
-                            ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-primary to-accent text-white hover:shadow-lg transform hover:scale-105'
-                        }`}
-                      >
-                        {isMyGame(game.player1, game.player2) ? '👑 Your Game' : '⚔️ Join Game'}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <h2 className="font-heading font-bold text-2xl accent-text">
+                Your Games
+              </h2>
             </div>
+
+            {games.length === 0 ? (
+              <div className="text-center py-12">
+                <Trophy className="w-16 h-16 mx-auto mb-4 text-surface-a40" />
+                <p className="text-surface-a40 text-lg mb-2">No games yet</p>
+                <p className="text-surface-a50 text-sm">
+                  Create one or join an existing game to start playing!
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {games.map((game) => (
+                  <div
+                    key={game.id}
+                    className="game-card"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <span className="status-indicator active"></span>
+                        <span className="font-label text-lg font-bold accent-text">
+                          Game #{game.id}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Clock className="w-4 h-4" />
+                        {Math.floor((Date.now() / 1000 - game.lastMoveTime) / 60)}m ago
+                      </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-400">Host:</span>
+                        <span className="text-sm font-mono accent-text bg-surface-a10 px-3 py-1 rounded-lg">
+                          {formatAddress(game.player1)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-400">Wager:</span>
+                        <div className="wager-badge">
+                          <span>💎</span>
+                          {game.wager} ETH
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => navigate(`/game/${game.id}`)}
+                      className={`w-full py-3 font-bold rounded-lg transition-all ${
+                        game.status === 'Active' 
+                          ? 'bg-gradient-to-r from-success to-green-400 text-white hover:shadow-lg' 
+                          : 'bg-gradient-to-r from-warning to-orange-400 text-white hover:shadow-lg'
+                      }`}
+                    >
+                      {game.status === 'Active' ? '🎮 Continue Game' : 'View Details'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Available Games - Full Width */}
+          <div className="game-card">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-primary flex items-center justify-center">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="font-heading font-bold text-2xl accent-text">
+                Available Games
+              </h2>
+            </div>
+
+            {availableGames.length === 0 ? (
+              <div className="text-center py-16">
+                <Users className="w-20 h-20 mx-auto mb-6 text-surface-a40" />
+                <p className="text-surface-a40 text-xl mb-3">No available games</p>
+                <p className="text-surface-a50 text-base max-w-md mx-auto">
+                  🚀 Be the first to create a game and wait for an opponent to join!
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {availableGames.filter(game => !isGameExpired(game.lastMoveTime)).map((game) => (
+                  <div
+                    key={game.id}
+                    className="game-card"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <span className="status-indicator waiting"></span>
+                        <span className="font-label text-lg font-bold accent-text">
+                          Game #{game.id}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Clock className="w-4 h-4" />
+                        {Math.floor((Date.now() / 1000 - game.lastMoveTime) / 60)}m ago
+                      </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-400">Host:</span>
+                        <span className="text-sm font-mono accent-text bg-surface-a10 px-3 py-1 rounded-lg">
+                          {formatAddress(game.player1)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-400">Wager:</span>
+                        <div className="wager-badge">
+                          <span>💎</span>
+                          {game.wager} ETH
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleJoinGame(game.id)}
+                      disabled={loading || isMyGame(game.player1, game.player2)}
+                      className={`w-full py-3 font-bold rounded-lg transition-all ${
+                        isMyGame(game.player1, game.player2)
+                          ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-primary to-accent text-white hover:shadow-lg transform hover:scale-105'
+                      }`}
+                    >
+                      {isMyGame(game.player1, game.player2) ? '👑 Your Game' : '⚔️ Join Game'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
