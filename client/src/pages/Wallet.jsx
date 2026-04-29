@@ -24,40 +24,67 @@ const Wallet = () => {
 
   return (
     <div className="min-h-screen bg-surface-a0 flex flex-col justify-center items-center relative overflow-hidden">
-      {/* Subtle grid background */}
+      {/* Enhanced animated background */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1b181f_1px,transparent_1px),linear-gradient(to_bottom,#1b181f_1px,transparent_1px)] bg-[size:6rem_4rem] opacity-40" />
+      
+      {/* Multiple radial glows for depth */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_800px_at_20%_30%,rgba(0,168,204,0.15),transparent)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_600px_at_80%_70%,rgba(0,212,255,0.1),transparent)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_400px_at_50%_50%,rgba(119,85,170,0.08),transparent)]" />
 
-      {/* Radial glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_600px_at_50%_300px,rgba(119,85,170,0.15),transparent)]" />
-
-      <div className="relative z-10 flex flex-col items-center gap-12 px-4">
-        {/* Logo / icon */}
-        <div className="w-20 h-20 rounded-2xl bg-surface-tonal-a10 border border-surface-tonal-a20 flex items-center justify-center">
-          <Gamepad2 className="w-10 h-10 text-primary-a30" />
+      <div className="relative z-10 flex flex-col items-center gap-16 px-4 max-w-2xl w-full">
+        {/* Enhanced logo */}
+        <div className="wallet-logo">
+          <Gamepad2 className="w-16 h-16 text-white" />
         </div>
 
-        {/* Title */}
-        <div className="text-center">
-          <h1 className="font-heading font-bold text-5xl md:text-7xl gradient-text">
+        {/* Enhanced title section */}
+        <div className="text-center space-y-6">
+          <h1 className="font-heading font-bold text-6xl md:text-8xl gradient-text">
             TicTacToe Arena
           </h1>
-          <p className="mt-4 text-surface-a40 font-body text-lg max-w-md mx-auto">
-            Wager-based Tic-Tac-Toe gaming on the blockchain
-          </p>
+          <div className="space-y-4">
+            <p className="text-surface-a30 font-body text-xl max-w-lg mx-auto leading-relaxed">
+              ⚡ Wager-based Tic-Tac-Toe gaming on the blockchain
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <div className="game-stats">
+                <span className="text-accent">🎮</span>
+                <span>Play & Earn</span>
+              </div>
+              <div className="game-stats">
+                <span className="text-accent">⚡</span>
+                <span>Fast Paced</span>
+              </div>
+              <div className="game-stats">
+                <span className="text-accent">🔒</span>
+                <span>Secure</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Connect button */}
-        <button
-          className="px-10 py-4 bg-primary-a0 hover:bg-primary-a10 text-white rounded-xl font-label font-semibold text-lg transition-all hover:shadow-[0_0_24px_rgba(119,85,170,0.3)]"
-          onClick={handleWalletConnection}
-        >
-          Connect Wallet
-        </button>
-
-        {/* Subtle hint */}
-        <p className="text-surface-a30 font-label text-xs">
-          Requires MetaMask on Sepolia testnet
-        </p>
+        {/* Enhanced connect button */}
+        <div className="space-y-6 w-full max-w-md">
+          <button
+            className="connect-wallet-btn w-full text-xl"
+            onClick={handleWalletConnection}
+          >
+            🔗 Connect Wallet
+          </button>
+          
+          {/* Additional info */}
+          <div className="text-center space-y-3">
+            <p className="text-surface-a30 font-label text-sm">
+              🔒 Requires MetaMask on Sepolia testnet
+            </p>
+            <div className="flex justify-center gap-6 text-xs text-surface-a40">
+              <span>💧 Low Gas Fees</span>
+              <span>⚡ Instant Games</span>
+              <span>🏆 Win ETH</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -80,23 +80,39 @@ const GameLobby = () => {
     <div className="flex-1 px-6 md:px-10 py-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-              <h1 className="font-heading font-bold text-4xl accent-text mb-2">
+        <div className="lobby-header">
+              <h1 className="font-heading font-bold text-5xl accent-text mb-4">
                 Tic-Tac-Toe Arena
               </h1>
-              <p className="font-body text-gray-400 text-lg">
-                Stake Sepolia ETH and battle opponents in on-chain Tic-Tac-Toe. Winner takes all!
+              <p className="font-body text-gray-400 text-xl max-w-2xl">
+                ⚡ Stake Sepolia ETH and battle opponents in on-chain Tic-Tac-Toe. Winner takes all! ⚡
               </p>
+              <div className="flex flex-wrap gap-4 mt-6">
+                <div className="game-stats">
+                  <Trophy className="w-4 h-4 text-accent" />
+                  <span>Win Big</span>
+                </div>
+                <div className="game-stats">
+                  <Users className="w-4 h-4 text-accent" />
+                  <span>Real Players</span>
+                </div>
+                <div className="game-stats">
+                  <Clock className="w-4 h-4 text-accent" />
+                  <span>Fast Games</span>
+                </div>
+              </div>
         </div>
 
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Create Game */}
           <div className="lg:col-span-1">
-            <div className="skeleton-card">
-              <div className="flex items-center gap-2 mb-4">
-                <Plus className="w-5 h-5 text-accent" />
-                <h2 className="font-heading font-bold text-xl accent-text">
+            <div className="create-game-card">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-primary flex items-center justify-center">
+                  <Plus className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="font-heading font-bold text-2xl accent-text">
                   Create New Game
                 </h2>
               </div>
@@ -104,16 +120,16 @@ const GameLobby = () => {
               {!showCreateForm ? (
                 <button
                   onClick={() => setShowCreateForm(true)}
-                  className="skeleton-button w-full flex items-center justify-center gap-2"
+                  className="connect-wallet-btn w-full flex items-center justify-center gap-3 text-lg"
                 >
-                  <Plus className="w-4 h-4" />
-                  Create Game
+                  <Plus className="w-5 h-5" />
+                  Create New Game
                 </button>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-bold text-primary-a0 mb-2 font-label">
-                      Wager Amount (ETH)
+                    <label className="block text-sm font-bold text-primary-a0 mb-3 font-label">
+                      💰 Wager Amount (ETH)
                     </label>
                     <input
                       type="number"
@@ -122,23 +138,24 @@ const GameLobby = () => {
                       value={wagerAmount}
                       onChange={(e) => setWagerAmount(e.target.value)}
                       placeholder="0.01"
-                      className="w-full px-4 py-2 bg-surface-tonal-a0 border border-surface-tonal-a20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-a20 text-primary-a40"
+                      className="enhanced-input w-full"
                     />
+                    <p className="text-xs text-gray-500 mt-2">Minimum: 0.001 ETH</p>
                   </div>
                   <div className="flex gap-3">
                     <button
                       onClick={handleCreateGame}
                       disabled={loading || !wagerAmount}
-                      className="flex-1 skeleton-button disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 connect-wallet-btn disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {loading ? 'Creating...' : 'Create'}
+                      {loading ? <div className="loading-spinner mx-auto" /> : 'Create Game'}
                     </button>
                     <button
                       onClick={() => {
                         setShowCreateForm(false);
                         setWagerAmount('');
                       }}
-                      className="skeleton-button"
+                      className="skeleton-button px-6"
                     >
                       Cancel
                     </button>
@@ -148,59 +165,69 @@ const GameLobby = () => {
             </div>
 
             {/* My Games */}
-            <div className="skeleton-card mt-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Trophy className="w-5 h-5 text-accent" />
-                <h2 className="font-heading font-bold text-xl accent-text">
+            <div className="game-card mt-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-success to-green-400 flex items-center justify-center">
+                  <Trophy className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="font-heading font-bold text-2xl accent-text">
                   Your Games
                 </h2>
               </div>
 
               {games.length === 0 ? (
-                <p className="text-surface-a40 text-center py-8">
-                  No games yet. Create one or join an existing game!
-                </p>
+                <div className="text-center py-12">
+                  <Trophy className="w-16 h-16 mx-auto mb-4 text-surface-a40" />
+                  <p className="text-surface-a40 text-lg mb-2">No games yet</p>
+                  <p className="text-surface-a50 text-sm">
+                    Create one or join an existing game to start playing!
+                  </p>
+                </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-4">
                   {games.map((game) => (
                     <div
                       key={game.id}
-                      className="skeleton-card"
+                      className="game-card"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-label text-sm font-semibold accent-text">
-                          Game #{game.id}
-                        </span>
-                        <div className="flex items-center gap-1 text-xs text-gray-500">
-                          <Clock className="w-3 h-3" />
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <span className="status-indicator active"></span>
+                          <span className="font-label text-lg font-bold accent-text">
+                            Game #{game.id}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <Clock className="w-4 h-4" />
                           {Math.floor((Date.now() / 1000 - game.lastMoveTime) / 60)}m ago
                         </div>
                       </div>
                       
-                      <div className="mb-3">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-gray-500">Host:</span>
-                          <span className="text-xs font-mono accent-text">
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-gray-400">Host:</span>
+                          <span className="text-sm font-mono accent-text bg-surface-a10 px-3 py-1 rounded-lg">
                             {formatAddress(game.player1)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">Wager:</span>
-                          <span className="text-sm font-semibold accent-text">
+                          <span className="text-sm text-gray-400">Wager:</span>
+                          <div className="wager-badge">
+                            <span>💎</span>
                             {game.wager} ETH
-                          </span>
+                          </div>
                         </div>
                       </div>
 
                       <button
                         onClick={() => navigate(`/game/${game.id}`)}
-                        className={`skeleton-button w-full px-4 py-2 font-semibold text-sm ${
+                        className={`w-full py-3 font-bold rounded-lg transition-all ${
                           game.status === 'Active' 
-                            ? 'text-success' 
-                            : 'text-warning'
+                            ? 'bg-gradient-to-r from-success to-green-400 text-white hover:shadow-lg' 
+                            : 'bg-gradient-to-r from-warning to-orange-400 text-white hover:shadow-lg'
                         }`}
                       >
-                        {game.status === 'Active' ? 'Continue Game' : 'View Details'}
+                        {game.status === 'Active' ? '🎮 Continue Game' : '👁️ View Details'}
                       </button>
                     </div>
                   ))}
@@ -211,60 +238,70 @@ const GameLobby = () => {
 
           {/* Right: Available Games */}
           <div className="lg:col-span-2">
-            <div className="skeleton-card">
-              <div className="flex items-center gap-2 mb-4">
-                <Users className="w-5 h-5 text-accent" />
-                <h2 className="font-heading font-bold text-xl accent-text">
+            <div className="game-card">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-primary flex items-center justify-center">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="font-heading font-bold text-2xl accent-text">
                   Available Games
                 </h2>
               </div>
 
               {availableGames.length === 0 ? (
-                <div className="text-center py-12">
-                  <Users className="w-12 h-12 mx-auto mb-4 text-surface-a40" />
-                  <p className="text-surface-a40 mb-2">No available games</p>
-                  <p className="text-surface-a50 text-sm">
-                    Be the first to create a game and wait for an opponent!
+                <div className="text-center py-16">
+                  <Users className="w-20 h-20 mx-auto mb-6 text-surface-a40" />
+                  <p className="text-surface-a40 text-xl mb-3">No available games</p>
+                  <p className="text-surface-a50 text-base max-w-md mx-auto">
+                    🚀 Be the first to create a game and wait for an opponent to join!
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {availableGames.filter(game => !isGameExpired(game.lastMoveTime)).map((game) => (
                     <div
                       key={game.id}
-                      className="skeleton-card"
+                      className="game-card"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-label text-sm font-semibold accent-text">
-                          Game #{game.id}
-                        </span>
-                        <div className="flex items-center gap-1 text-xs text-gray-500">
-                          <Clock className="w-3 h-3" />
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <span className="status-indicator waiting"></span>
+                          <span className="font-label text-lg font-bold accent-text">
+                            Game #{game.id}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <Clock className="w-4 h-4" />
                           {Math.floor((Date.now() / 1000 - game.lastMoveTime) / 60)}m ago
                         </div>
                       </div>
                       
-                      <div className="mb-3">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-gray-500">Host:</span>
-                          <span className="text-xs font-mono accent-text">
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-gray-400">Host:</span>
+                          <span className="text-sm font-mono accent-text bg-surface-a10 px-3 py-1 rounded-lg">
                             {formatAddress(game.player1)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">Wager:</span>
-                          <span className="text-sm font-semibold accent-text">
+                          <span className="text-sm text-gray-400">Wager:</span>
+                          <div className="wager-badge">
+                            <span>💎</span>
                             {game.wager} ETH
-                          </span>
+                          </div>
                         </div>
                       </div>
 
                       <button
                         onClick={() => handleJoinGame(game.id)}
                         disabled={loading || isMyGame(game.player1, game.player2)}
-                        className="skeleton-button w-full disabled:opacity-50"
+                        className={`w-full py-3 font-bold rounded-lg transition-all ${
+                          isMyGame(game.player1, game.player2)
+                            ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-primary to-accent text-white hover:shadow-lg transform hover:scale-105'
+                        }`}
                       >
-                        {isMyGame(game.player1, game.player2) ? 'Your Game' : 'Join Game'}
+                        {isMyGame(game.player1, game.player2) ? '👑 Your Game' : '⚔️ Join Game'}
                       </button>
                     </div>
                   ))}
