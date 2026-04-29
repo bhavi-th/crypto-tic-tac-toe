@@ -303,7 +303,7 @@ const Vault = () => {
                         to={`/game/${game.id}`}
                         className="px-6 py-3 bg-gradient-to-r from-warning to-orange-400 text-white rounded-lg font-label font-bold hover:shadow-lg transition-all"
                       >
-                        👁️ View Details
+                        View Details
                       </Link>
                       <a
                         href={`https://sepolia.etherscan.io/address/${game.player1}`}

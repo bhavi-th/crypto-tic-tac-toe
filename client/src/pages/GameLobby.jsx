@@ -227,7 +227,7 @@ const GameLobby = () => {
                             : 'bg-gradient-to-r from-warning to-orange-400 text-white hover:shadow-lg'
                         }`}
                       >
-                        {game.status === 'Active' ? '🎮 Continue Game' : '👁️ View Details'}
+                        {game.status === 'Active' ? '🎮 Continue Game' : 'View Details'}
                       </button>
                     </div>
                   ))}
